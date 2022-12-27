@@ -2,8 +2,8 @@ package com.netty.server;
 
 import com.netty.annotation.AutoImport;
 import com.netty.annotation.ObjectScan;
-import com.netty.config.ConfigProperties;
 import com.netty.code.MsgProtocol;
+import com.netty.model.Null;
 import com.netty.model.RequestMsg;
 import com.netty.model.Void;
 import com.netty.reflection.BeanFactory;
@@ -27,8 +27,6 @@ import java.lang.reflect.Method;
 public class RpcServerHandler extends SimpleChannelInboundHandler<MsgProtocol> {
 
     @AutoImport
-    private ConfigProperties properties;
-    @AutoImport
     private BeanFactory beanFactory;
 
     /**
@@ -51,21 +49,31 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<MsgProtocol> {
         // 解析远程服务调用的请求数据
         RequestMsg request = ByteUtil.cast(msg.getMsg(), RequestMsg.class);
 
-        // 负载均衡策略获取接口实现类
+        // 通过 Bean 工厂获取接口实现类
         Object instance = beanFactory.getServiceImpl(request.getClazz());
 
-        // 获取方法和参数，执行方法得到结果
+        // 根据参数类型和方法名找到方法对象，执行该方法获得接口的执行结果
         Class<?>[] paramsType = request.getParamsType();
         Method method = ObjectUtil.isEmpty(paramsType)
                 ? instance.getClass().getDeclaredMethod(request.getMethodName())
                 : instance.getClass().getDeclaredMethod(request.getMethodName(), paramsType);
         Object res = method.invoke(instance, request.getParams());
 
-        Class<?> returnType = method.getReturnType();
-        // 判断有无返回值
-        boolean hasReturn = !Void.class.getSimpleName().toLowerCase().equalsIgnoreCase(returnType.getName());
+        /*
+         *  判断有无返回值，Void 只实现了 Serializable 接口的空对象，
+         *  仅仅表示没有返回值，在客户端获取结果的方法中可以看到它们的使用
+         */
+        boolean hasReturn = !Void.class.getSimpleName().toLowerCase()
+                .equalsIgnoreCase(method.getReturnType().getName());
+
+        /*
+         *  Null 只实现了 Serializable 接口的空对象，仅仅表示数据为空，
+         *  为了在调用 ByteUtil.getBytes 可以将空值序列化
+         */
+        Object data = hasReturn ? (res == null ? new Null() : res) : new Void();
+
         // 将数据封装为自定义协议，返回客户端
-        byte[] bytes = ByteUtil.getBytes(hasReturn ? res : new Void());
+        byte[] bytes = ByteUtil.getBytes(data);
         ctx.writeAndFlush(new MsgProtocol(bytes));
     }
 

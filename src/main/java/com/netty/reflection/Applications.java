@@ -6,6 +6,12 @@ import com.netty.config.RpcThreadPool;
 import com.netty.util.ObjectUtil;
 
 /**
+ *
+ *  当前类只有两个重要的方法
+ *      1、run() 通过注解判断当前是客户端还是服务端，
+ *        并最终调用 RpcNettyClient/RpcNettyServer 的 start 方法开启服务
+ *      2、close() 关闭当前的服务和线程池
+ *
  * @author yehuisheng
  */
 public class Applications {

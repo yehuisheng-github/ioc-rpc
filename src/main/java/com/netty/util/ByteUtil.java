@@ -42,9 +42,6 @@ public class ByteUtil {
      * @return      将对象转为字节数组
      */
     public static byte[] getBytes(Object obj) {
-        if (obj == null) {
-            obj = new Null();
-        }
         if (obj instanceof Serializable) {
             // 已经序列化了
             byte[] bytes = null;
