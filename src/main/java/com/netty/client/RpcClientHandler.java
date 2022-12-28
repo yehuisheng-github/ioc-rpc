@@ -105,7 +105,7 @@ public class RpcClientHandler<T> extends SimpleChannelInboundHandler<MsgProtocol
         }
         /*
          *  无返回值或空值使用特定对象表示，
-         *  如果方法无返回值，服务端也不回传消息，客户端就会一直阻塞在 CONDITION.await() 中
+         *  如果方法无返回值，服务端也不回传消息，客户端就会一直阻塞在 Object.wait() 中
          */
         return (result instanceof Void || result instanceof Null) ? null : (T) result;
     }
