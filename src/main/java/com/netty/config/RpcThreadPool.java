@@ -19,6 +19,8 @@ public class RpcThreadPool extends ThreadPoolExecutor {
                 new ArrayBlockingQueue<>(PROCESSORS * 500),
                 Executors.defaultThreadFactory(),
                 new SelfRejectedPolicy());
+        // 设置 corePoolSize 的空闲线程超时后，也会被释放
+        allowCoreThreadTimeOut(true);
     }
 
 }
